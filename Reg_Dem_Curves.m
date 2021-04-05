@@ -1,10 +1,10 @@
 %% Regional Demand Curve Calculations 
-%Thesis Title: An Optimal Power Flow Model to Guide  Electricity Grid 
-%Expansion in Ethiopia for Groundwater Irrigation Use
-%Author: Prathibha Juturu
+%Publication Title: OPTIMAL GRID EXPANSION UNDER FUTURE ELECTRICITY DEMAND FOR GROUNDWATER IRRIGATION IN ETHIOPIA
+%Author of MATLAB Code: Prathibha Juturu
 %Description: This code calculates regional demand curves for each of the
-%13 regions in the MME model. (Note: Werder is excluded because irrigation
+%13 regions for the Ethiopia Electricity OPF Model. (Note: Werder is excluded because irrigation
 %demand is 0 MW and it is not connected to the national electricity grid).
+
 %Part 1: calculate the hourly irrigation demand (MW) for wet and dry seasons
 %Part 2: calculate regional peak demand (MW) and uses that to create the
 %regional demand curves
@@ -16,11 +16,13 @@ clear all
 
 format shortG
 %% Part 1: Hourly Irrigation Demand Calculation in Wet and Dry Seasons 
-% Check 5.3 Groundwater Irrigation Demand for process to calculate the
+% Check Appendix B3: Regional Electricity Demand in publication for process to calculate the
 % electricity demand for groundwater irrigation 
 
 % Loading data
-% Need to rearrange to start row 1 with Oct 1  
+% Need to rearrange to start row 1 with Oct 1 since season 1 is between Oct 1, 2018 - Dec 31, 2018 and Jan 1 2018- May 31, 2018
+% and season 2 is between June 1, 2018 to September 20, 2018
+
 % Column #:     Region Name:
 %   1              Asosa
 %   2              Awasa
@@ -52,26 +54,6 @@ for i = 1:A %each region
         wethourlyMW(i) = (sum(x([244:365],i))/((365-243)*24))*1000; 
         %average daily irrigation load for wet season (MW)
 end
-%*Delete below 
-% for i = 1:A %each region
-%         dryhourlyMW(i) = 0;
-%         %average daily irrigation load for dry season (MW)
-% end
-% 
-% for i = 1:A %each region
-%         wethourlyMW(i) = 0;
-%         %average daily irrigation load for wet season (MW)
-% end
-
-
-% dry = dryhourlyMW;
-% wet = wethourlyMW;
-% dry = array2table(dry');
-% wet = array2table(wet');
-% 
-% filename2 = ('Hourly_Irr_Dem.xlsx');
-% writetable(dry, filename2, 'Sheet', 1);
-% writetable(wet, filename2, 'Sheet', 2);
 
 %Plotting bar graph for dry and wet season irrigation demand (MW)
 for i = 1:length(dryhourlyMW)
@@ -93,8 +75,6 @@ ylabel('Load (MW)')
 ylim([0 500])
 
 %% Part 2: Creating regional demand curves 
-% Check Section 5.6 Regional Demand 24-hour Load Curve for calculation
-% process
 
 % Calculating regional peak demand
 %Peak demand Addis is 60% of country peak demand 
@@ -110,13 +90,13 @@ P =  csvread('Ethiopia_Regional_population.csv', 1, 1); %loading percentage of
 
 P_percent = P/Pop;
 
-%*Tot_elec_17 = 10000;        % (GWh) 2017 total electricity consumption (Source: IEA)
-
 %Below are the options for peak demand 
+%These demands are calculated in Appendix B3.4 Calculating Future Demand 
+
 %Tot_peak_calc = 1632;    % (MW) 2017 peak demand check research notes for this calculation
-%Tot_peak_calc = 5206;    % (MW) future demand 2027 n = 10
-%Tot_peak_calc = 3676;    % (MW) future demand 2024 n = 7
-Tot_peak_calc = 2058;     % (MW) future demand 2019 n = 2
+%Tot_peak_calc = 5206;    % (MW) future demand 2027 n = 10. Please refer to Appendix B3.4 for this value 
+%Tot_peak_calc = 3676;    % (MW) future demand 2024 n = 7. Please refer to Appendix B3.4 for this value
+Tot_peak_calc = 2058;     % (MW) future demand 2019 n = 2. Please refer to Appendix B3.4 for this value
 %Tot_peak_17_source = 5000;  % (MW) (Source:https://pubs.naruc.org/pub.cfm?id=537C14D4-2354-D714-511E-CB19B0D7EBD9)
 
 Reg_peak = P_percent*Tot_peak_calc*0.4; %disaggregating 40% of the total peak demand 
@@ -130,8 +110,6 @@ Reg_peak(13) = 0.6*Tot_peak_calc;        %peak demand for Addis in 2017
 % Hourly points as percentage of peak demand (starts at 1AM)
 h = 1:24;
 hour_percent = [0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 1 1 1 1 0.75 0.75 0.75 0.75 1 1 1 0.5 0.5 0.5];
-
-%*hour_percent = [0.5 0.5 0.5 0.5 0.5 0.5833 0.6666 0.7499 0.8332 0.9165 1 1 1 1 0.85 0.85 0.85 0.85 1 1 1 0.8333 0.6667 0.5];
 
 %Plotting the daily load curve proportion to peak demand
 figure (1)
@@ -169,11 +147,6 @@ for h = 1:24
     end
 end
 
-
-%*v = sum(Reg_dem_hourly(:,3))*365/1000
-%*checking to see yearly total matches with 10,000 GWh (IEA 2018) estimate
-%*Above is converted from MWh to GWh
-
 %% Part 3: Combining regional demand curve and hourly irrigation demand 
 
 %Combining the domestic regional demand and the groundwater irrigation
@@ -189,20 +162,13 @@ for h = 1:24
     end
 end
 
-
-
-%* % Checking to see if added irrigation load is correct 
-% d = sum(dryhourlyMW)*243*24/1000;
-% u = sum(wethourlyMW)*(365-243)*24/1000;
-% w = (sum(Tot_dem_dry(:,3))*243 + sum(Tot_dem_wet(:,3))*(365-243))/1000; 
-% tot = d+u;
-
 %% Part 4: Adding export demands
-%Check Section 5.5 Exports for export demand values
-%Two options for export demands
-%export = [100 0 100 0];
+%Check Section 4.6 Exports for export demand values
 
-export = [200 1000 100 400];
+%There are two options for export demands. Use either option depending on export scenario of interest. 
+%export = [100 0 100 0]; %Present export demand 
+
+export = [200 1000 100 400]; %Future export demand 
 for x = 1:length(export)    
     for h = 1:24
         Tot_dem_dry(312+(x-1)*24+h,1) = 13+x; 
@@ -295,22 +261,7 @@ end
 Tot_dem_dry = array2table(Tot_dem_dry);
 Tot_dem_wet = array2table(Tot_dem_wet);
 
-filename = 'Model5_demand.xlsx';
+filename = 'Insert_Model_Run.xlsx'; %Change the .xlsx file name to a suitable name
 writetable(Tot_dem_dry,filename,'Sheet',1);
 writetable(Tot_dem_wet,filename,'Sheet',2);
 
-%%Calculating total annual electricity consumption 
-peaks = [1632 5206 3676 2058];
-%2017/2027/2024/2019
-e = [200 1700];
-
-hour_percent = [0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 1 1 1 1 0.75 0.75 0.75 0.75 1 1 1 0.5 0.5 0.5];
-v = (365/1000)*sum(hour_percent*peaks(2) + e(1)) + sum(dryhourlyMW)*(24*243/1000) + sum(wethourlyMW)*(24*(365-243)/1000)
-
-
-%baseline: 11581 
-%S1 - 13120
-%S2 - 26260
-%S3 - 34644
-%S4 - 38570
-%S5 - 42674
